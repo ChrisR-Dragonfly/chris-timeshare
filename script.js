@@ -350,11 +350,98 @@ function setMinDates() {
   });
 }
 
+// ---- Interactive Map (Leaflet.js) ----
+function initMap() {
+  const mapEl = document.getElementById('map');
+  if (!mapEl || typeof L === 'undefined') return;
+
+  // Centre between Miami and LA
+  const map = L.map('map', {
+    center: [36.5, -96.5],
+    zoom: 4,
+    zoomControl: true,
+    scrollWheelZoom: false,   // prevent accidental scroll-hijack
+  });
+
+  // OpenStreetMap tiles (free, no API key needed)
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  }).addTo(map);
+
+  // Enable scroll-wheel zoom only when the map is focused / clicked
+  mapEl.addEventListener('click',     () => map.scrollWheelZoom.enable());
+  mapEl.addEventListener('mouseleave',() => map.scrollWheelZoom.disable());
+
+  // ---- Custom pin icon factory ----
+  function makePinIcon(cssClass) {
+    return L.divIcon({
+      className: '',
+      html: `<div class="custom-pin ${cssClass}"><span class="custom-pin-inner">🏠</span></div>`,
+      iconSize:   [36, 36],
+      iconAnchor: [18, 36],
+      popupAnchor:[0, -40],
+    });
+  }
+
+  // ---- Popup HTML factory ----
+  function makePopup(prop) {
+    return `
+      <img class="map-popup-img" src="${prop.image}" alt="${prop.name}" />
+      <div class="map-popup">
+        <h3>${prop.name}</h3>
+        <div class="popup-loc">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+          ${prop.location}
+        </div>
+        <div class="popup-meta">
+          <span>🛏 Sleeps ${prop.sleeps}</span>
+          <span>💰 $${prop.pricePerNight}/night</span>
+        </div>
+        <button class="popup-book" onclick="openBookingModal('${prop.id}','${prop.name}')">Book Now</button>
+      </div>
+    `;
+  }
+
+  // ---- Miami marker ----
+  const miami = PROPERTIES[0];
+  const miamiMarker = L.marker([25.7617, -80.1918], { icon: makePinIcon('miami') })
+    .addTo(map)
+    .bindPopup(makePopup(miami), { maxWidth: 260, minWidth: 240 });
+
+  // ---- Los Angeles marker ----
+  const la = PROPERTIES[1];
+  const laMarker = L.marker([34.0522, -118.2437], { icon: makePinIcon('la') })
+    .addTo(map)
+    .bindPopup(makePopup(la), { maxWidth: 260, minWidth: 240 });
+
+  // Legend clicks fly to & open the matching popup
+  document.getElementById('legend-miami').addEventListener('click', () => {
+    map.flyTo([25.7617, -80.1918], 11, { duration: 1.2 });
+    setTimeout(() => miamiMarker.openPopup(), 1300);
+  });
+  document.getElementById('legend-la').addEventListener('click', () => {
+    map.flyTo([34.0522, -118.2437], 11, { duration: 1.2 });
+    setTimeout(() => laMarker.openPopup(), 1300);
+  });
+
+  // Also add "Locations" to the nav
+  const navLinks = document.getElementById('navLinks');
+  const locLi = document.createElement('li');
+  locLi.innerHTML = `<a href="#locations" class="nav-link">Locations</a>`;
+  // Insert before "Contact"
+  const contactLi = [...navLinks.querySelectorAll('li')].find(li => li.querySelector('a[href="#contact"]'));
+  if (contactLi) navLinks.insertBefore(locLi, contactLi);
+}
+
 // ---- Init ----
 document.addEventListener('DOMContentLoaded', () => {
 
   // Render all properties
   renderProperties();
+
+  // Init map
+  initMap();
 
   // Set min dates
   setMinDates();

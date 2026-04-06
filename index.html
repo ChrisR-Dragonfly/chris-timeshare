@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Chris' Timeshare — Luxury Vacation Rentals</title>
   <link rel="stylesheet" href="style.css" />
+  <!-- Leaflet.js — free, open-source interactive maps -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
 
@@ -105,6 +108,36 @@
         <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" style="opacity:0.3"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
         <p>No properties match your search criteria.</p>
         <a href="#" class="link-underline" id="clearSearch">Clear all filters</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== MAP SECTION ===== -->
+  <section class="map-section" id="locations">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Our Locations</span>
+        <h2>Find Us on the Map</h2>
+        <p class="section-subtitle">Two premier destinations across the United States — click a pin to explore.</p>
+      </div>
+    </div>
+    <div class="map-wrapper">
+      <div id="map"></div>
+      <div class="map-legend">
+        <div class="map-legend-item" id="legend-miami">
+          <div class="legend-pin miami"></div>
+          <div>
+            <strong>Miami Retreat</strong>
+            <span>Miami, FL — Sleeps 6</span>
+          </div>
+        </div>
+        <div class="map-legend-item" id="legend-la">
+          <div class="legend-pin la"></div>
+          <div>
+            <strong>Los Angeles Oasis</strong>
+            <span>Los Angeles, CA — Sleeps 8</span>
+          </div>
+        </div>
       </div>
     </div>
   </section>

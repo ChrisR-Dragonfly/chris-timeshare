@@ -11,7 +11,12 @@ const PROPERTIES = [
     sleeps: 6,
     bedrooms: 3,
     amenities: ['pool', 'garage', 'tennis court', 'theater'],
-    image: 'https://picsum.photos/seed/miami-villa-luxury/800/520',
+    images: [
+      'https://picsum.photos/seed/miami-villa-luxury/800/520',
+      'https://picsum.photos/seed/miami-pool-deck/800/520',
+      'https://picsum.photos/seed/miami-beach-resort/800/520',
+      'https://picsum.photos/seed/miami-interior-living/800/520',
+    ],
     description: 'A stunning Miami villa with resort-style amenities, just minutes from South Beach. Enjoy sun-soaked days poolside and vibrant evenings in one of America\'s most iconic cities.',
     pricePerNight: 350,
     badge: 'available',
@@ -26,7 +31,12 @@ const PROPERTIES = [
     sleeps: 8,
     bedrooms: 4,
     amenities: ['beachside', 'pool', 'gazebo', 'grill'],
-    image: 'https://picsum.photos/seed/la-beach-oasis/800/520',
+    images: [
+      'https://picsum.photos/seed/la-beach-oasis/800/520',
+      'https://picsum.photos/seed/la-pool-sunset/800/520',
+      'https://picsum.photos/seed/la-gazebo-garden/800/520',
+      'https://picsum.photos/seed/la-ocean-terrace/800/520',
+    ],
     description: 'Breathtaking beachside living in the heart of Los Angeles. This expansive property offers direct ocean access, al fresco dining under the gazebo, and unforgettable California sunsets.',
     pricePerNight: 450,
     badge: 'limited',
@@ -162,20 +172,23 @@ function renderProperties(filtered) {
 
     return `
       <article class="property-card" data-id="${prop.id}" data-sleeps="${prop.sleeps}" data-location="${prop.location}">
-        <div class="card-image-wrap">
-          <img src="${prop.image}" alt="${prop.name}" loading="lazy" />
+        <div class="card-image-wrap" id="slideshow-${prop.id}">
+          ${prop.images.map((src, i) => `
+            <img src="${src}" alt="${prop.name} photo ${i + 1}" loading="${i === 0 ? 'eager' : 'lazy'}" class="slide-img${i === 0 ? ' active' : ''}" />
+          `).join('')}
           <span class="card-badge ${prop.badge}">${prop.badgeText}</span>
           <div class="card-image-overlay">
             <button class="card-quick-book" data-id="${prop.id}" data-name="${prop.name}">Quick Book</button>
+          </div>
+          <button class="slide-arrow slide-prev" data-id="${prop.id}" aria-label="Previous photo">&#8249;</button>
+          <button class="slide-arrow slide-next" data-id="${prop.id}" aria-label="Next photo">&#8250;</button>
+          <div class="slide-dots">
+            ${prop.images.map((_, i) => `<span class="slide-dot${i === 0 ? ' active' : ''}" data-id="${prop.id}" data-index="${i}"></span>`).join('')}
           </div>
         </div>
         <div class="card-body">
           <div class="card-title-row">
             <h3>${prop.name}</h3>
-            <div class="card-price">
-              <span class="price-amount">$${prop.pricePerNight}</span>
-              <span class="price-unit">/ night</span>
-            </div>
           </div>
           <div class="card-location">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
@@ -350,6 +363,78 @@ function setMinDates() {
   });
 }
 
+// ---- Slideshow ----
+const slideshowTimers = {};
+
+function goToSlide(propId, index) {
+  const wrap = document.getElementById(`slideshow-${propId}`);
+  if (!wrap) return;
+  const imgs = wrap.querySelectorAll('.slide-img');
+  const dots = wrap.querySelectorAll('.slide-dot');
+  const total = imgs.length;
+  const next = (index + total) % total;
+
+  imgs.forEach((img, i) => img.classList.toggle('active', i === next));
+  dots.forEach((dot, i) => dot.classList.toggle('active', i === next));
+}
+
+function startSlideshow(propId, total) {
+  let current = 0;
+  slideshowTimers[propId] = setInterval(() => {
+    current = (current + 1) % total;
+    goToSlide(propId, current);
+  }, 3500);
+}
+
+function initSlideshows() {
+  PROPERTIES.forEach(prop => {
+    const total = prop.images.length;
+    startSlideshow(prop.id, total);
+
+    const wrap = document.getElementById(`slideshow-${prop.id}`);
+    if (!wrap) return;
+
+    // Pause on hover
+    wrap.addEventListener('mouseenter', () => clearInterval(slideshowTimers[prop.id]));
+    wrap.addEventListener('mouseleave', () => {
+      clearInterval(slideshowTimers[prop.id]);
+      const current = [...wrap.querySelectorAll('.slide-img')].findIndex(img => img.classList.contains('active'));
+      slideshowTimers[prop.id] = setInterval(() => {
+        const cur = [...wrap.querySelectorAll('.slide-img')].findIndex(img => img.classList.contains('active'));
+        goToSlide(prop.id, cur + 1);
+      }, 3500);
+    });
+  });
+
+  // Arrow buttons
+  document.querySelectorAll('.slide-prev').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      const wrap = document.getElementById(`slideshow-${id}`);
+      const cur = [...wrap.querySelectorAll('.slide-img')].findIndex(img => img.classList.contains('active'));
+      goToSlide(id, cur - 1);
+    });
+  });
+  document.querySelectorAll('.slide-next').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      const wrap = document.getElementById(`slideshow-${id}`);
+      const cur = [...wrap.querySelectorAll('.slide-img')].findIndex(img => img.classList.contains('active'));
+      goToSlide(id, cur + 1);
+    });
+  });
+
+  // Dot buttons
+  document.querySelectorAll('.slide-dot').forEach(dot => {
+    dot.addEventListener('click', e => {
+      e.stopPropagation();
+      goToSlide(dot.dataset.id, parseInt(dot.dataset.index));
+    });
+  });
+}
+
 // ---- Interactive Map (Leaflet.js) ----
 function initMap() {
   const mapEl = document.getElementById('map');
@@ -442,6 +527,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Render all properties
   renderProperties();
+
+  // Init slideshows
+  initSlideshows();
 
   // Init map
   initMap();

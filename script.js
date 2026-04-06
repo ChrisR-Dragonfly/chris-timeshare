@@ -355,12 +355,9 @@ function initMap() {
   const mapEl = document.getElementById('map');
   if (!mapEl || typeof L === 'undefined') return;
 
-  // Centre between Miami and LA
   const map = L.map('map', {
-    center: [36.5, -96.5],
-    zoom: 4,
     zoomControl: true,
-    scrollWheelZoom: false,   // prevent accidental scroll-hijack
+    scrollWheelZoom: false,
   });
 
   // OpenStreetMap tiles (free, no API key needed)
@@ -414,6 +411,12 @@ function initMap() {
   const laMarker = L.marker([34.0522, -118.2437], { icon: makePinIcon('la') })
     .addTo(map)
     .bindPopup(makePopup(la), { maxWidth: 260, minWidth: 240 });
+
+  // Fit map to show both pins with padding
+  map.fitBounds(
+    [[25.7617, -118.2437], [34.0522, -80.1918]],
+    { padding: [60, 60] }
+  );
 
   // Legend clicks fly to & open the matching popup
   document.getElementById('legend-miami').addEventListener('click', () => {
